@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Printdle — Vibrant Print Solutions</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --vps-orange: #E8601C;
+    --vps-orange-light: #FDF0E8;
+    --vps-orange-border: #F4B48A;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555;
+    --text-muted: #888;
+    --bg: #ffffff;
+    --bg-surface: #f7f7f5;
+    --border: rgba(0,0,0,0.12);
+    --border-med: rgba(0,0,0,0.2);
+    --green-bg: #C0DD97; --green-text: #27500A;
+    --yellow-bg: #FAC775; --yellow-text: #633806;
+    --red-bg: #F7C1C1; --red-text: #791F1F;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* HEADER */
+  .site-header {
+    width: 100%;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .how-to-btn {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: none;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .how-to-btn:hover { background: var(--bg-surface); }
+
+  /* GAME CONTAINER */
+  .game-wrap {
+    width: 100%;
+    max-width: 700px;
+    padding: 0 16px 48px;
+  }
+
+  /* TITLE BLOCK */
+  .title-block {
+    text-align: center;
+    padding: 28px 0 20px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .title-block h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--text-primary);
+  }
+  .title-block h1 span { color: var(--vps-orange); }
+  .title-block p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* INPUT AREA */
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+  }
+  .autocomplete-wrap { position: relative; flex: 1; }
+  .autocomplete-wrap input {
+    width: 100%;
+    font-size: 14px;
+    padding: 9px 12px;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+  }
+  .autocomplete-wrap input:focus {
+    border-color: var(--vps-orange);
+    box-shadow: 0 0 0 2px var(--vps-orange-light);
+  }
+  .ac-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--bg);
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    z-index: 100;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .ac-item {
+    padding: 9px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+  .ac-item:hover, .ac-item.active { background: var(--bg-surface); }
+
+  .guess-btn {
+    padding: 9px 20px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--vps-orange);
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    height: 38px;
+    transition: background 0.15s;
+  }
+  .guess-btn:hover { background: #cf5318; }
+  .guess-btn:active { background: #b84714; }
+
+  .error-msg {
+    font-size: 12px;
+    color: #A32D2D;
+    min-height: 18px;
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  /* GRID */
+  .col-labels, .guess-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .col-labels { margin-bottom: 5px; }
+  .col-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    padding: 0 2px;
+  }
+  .col-label:first-child { text-align: left; }
+  .guess-row { margin-bottom: 4px; }
+
+  .cell {
+    border-radius: var(--radius);
+    padding: 8px 6px;
+    font-size: 12px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    line-height: 1.3;
+  }
+  .cell.name-cell {
+    justify-content: flex-start;
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    color: var(--text-primary);
+  }
+  .cell.green { background: var(--green-bg); color: var(--green-text); }
+  .cell.yellow { background: var(--yellow-bg); color: var(--yellow-text); }
+  .cell.red { background: var(--red-bg); color: var(--red-text); }
+  .cell.empty {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  /* STATUS MESSAGES */
+  .status-msg {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    text-align: center;
+    border: 0.5px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+  }
+  .status-msg.win {
+    background: #EAF3DE;
+    border-color: #97C459;
+    color: var(--green-text);
+  }
+  .status-msg.lose {
+    background: #FCEBEB;
+    border-color: #F09595;
+    color: var(--red-text);
+  }
+  .status-msg a {
+    color: var(--vps-orange);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .status-msg a:hover { text-decoration: underline; }
+
+  /* HOW TO PLAY PANEL */
+  .how-to-panel {
+    display: none;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .how-to-panel.open { display: block; }
+  .how-to-panel h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .how-to-panel ul { padding-left: 18px; }
+  .how-to-panel li { margin-bottom: 4px; }
+
+  @media (max-width: 520px) {
+    .col-labels, .guess-row { grid-template-columns: 1.6fr 0.8fr 0.9fr 0.9fr 0.8fr 0.7fr; gap: 3px; }
+    .cell { font-size: 11px; padding: 7px 4px; min-height: 42px; }
+    .col-label { font-size: 9px; }
+    .title-block h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <button class="how-to-btn" onclick="toggleHowTo()">How to play</button>
+</header>
+
+<div class="game-wrap">
+
+  <div class="title-block">
+    <h1>PRINT<span>DLE</span></h1>
+    <p>Guess today's wide-format printer. New puzzle every day.</p>
+  </div>
+
+  <div class="how-to-panel" id="how-to-panel">
+    <h3>How to play</h3>
+    <ul>
+      <li>Type a printer model name and select it from the list.</li>
+      <li>Each guess reveals how close you are across 5 attributes.</li>
+      <li><strong style="color:var(--green-text);background:var(--green-bg);padding:1px 6px;border-radius:3px;">Green</strong> — exact match.</li>
+      <li><strong style="color:var(--yellow-text);background:var(--yellow-bg);padding:1px 6px;border-radius:3px;">Yellow</strong> — close but not exact (width range only).</li>
+      <li><strong style="color:var(--red-text);background:var(--red-bg);padding:1px 6px;border-radius:3px;">Red</strong> — no match.</li>
+      <li>For print width, an arrow (↑ ↓) shows which direction to go.</li>
+      <li>You have 6 guesses. A new printer is chosen each day.</li>
+    </ul>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green-bg);"></div>exact match</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow-bg);"></div>close (width range)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red-bg);"></div>no match</div>
+  </div>
+
+  <div id="game-root"></div>
+
+</div>
+
+<script>
+const PRINTERS = [
+  { name: "VG4-540",         brand: "Roland",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 54  },
+  { name: "VG4-640",         brand: "Roland",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "XG-640",          brand: "Roland",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "XP-640",          brand: "Roland",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "AP-640",          brand: "Roland",  type: "Latex",       app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "TY-300i",         brand: "Roland",  type: "DTF",         app: "Apparel",           substrate: "Film/Transfer",  width: 13  },
+  { name: "BY-20",           brand: "Roland",  type: "DTF",         app: "Apparel",           substrate: "Film/Transfer",  width: 13  },
+  { name: "S40600",          brand: "Epson",   type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "S60600",          brand: "Epson",   type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "S80600",          brand: "Epson",   type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "F2270",           brand: "Epson",   type: "DTF/DTG",     app: "Apparel",           substrate: "Fabric/Garment", width: 16  },
+  { name: "CJV330-130",      brand: "Mimaki",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 54  },
+  { name: "CJV330-160",      brand: "Mimaki",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 64  },
+  { name: "JV330-130",       brand: "Mimaki",  type: "Eco-Solvent", app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 54  },
+  { name: "TS55-1800",       brand: "Mimaki",  type: "Sublimation", app: "Apparel",           substrate: "Fabric/Garment", width: 74  },
+  { name: "UJF-3042",        brand: "Mimaki",  type: "UV",          app: "Hard Goods/Promo",  substrate: "Rigid",          width: 12  },
+  { name: "DTF Entry",       brand: "Audley",  type: "DTF",         app: "Apparel",           substrate: "Film/Transfer",  width: 24  },
+  { name: "DTF Mid-Range",   brand: "Audley",  type: "DTF",         app: "Apparel",           substrate: "Film/Transfer",  width: 24  },
+  { name: "2513 UV Flatbed", brand: "Audley",  type: "UV",          app: "Signage/Graphics",  substrate: "Rigid",          width: 98  },
+  { name: "9060 UV Flatbed", brand: "Audley",  type: "UV",          app: "Hard Goods/Promo",  substrate: "Rigid",          width: 35  },
+  { name: 'UV DTF 24"',      brand: "Audley",  type: "UV DTF",      app: "Hard Goods/Promo",  substrate: "Film/Transfer",  width: 24  },
+  { name: 'UV DTF 13"',      brand: "Audley",  type: "UV DTF",      app: "Hard Goods/Promo",  substrate: "Film/Transfer",  width: 13  },
+  { name: "VUTEk Pro 33r",   brand: "EFI",     type: "UV",          app: "Signage/Graphics",  substrate: "Vinyl/Roll",     width: 126 },
+  { name: "V7000",           brand: "Epson",   type: "UV",          app: "Signage/Graphics",  substrate: "Rigid",          width: 48  },
+];
+
+const MAX = 6;
+
+function pickDaily() {
+  const seed = Math.floor(Date.now() / 86400000);
+  return PRINTERS[seed % PRINTERS.length];
+}
+
+const answer = pickDaily();
+let guesses = [];
+let selectedPrinter = null;
+let acFiltered = [];
+let acIdx = -1;
+
+function widthBucket(w) {
+  if (w <= 16) return "a";
+  if (w <= 24) return "b";
+  if (w <= 54) return "c";
+  if (w <= 64) return "d";
+  return "e";
+}
+function cmpWidth(g, a) {
+  if (g === a) return "green";
+  if (widthBucket(g) === widthBucket(a)) return "yellow";
+  return "red";
+}
+function widthArrow(g, a) { return g === a ? "" : g < a ? " ↑" : " ↓"; }
+
+function score(p) {
+  return {
+    name: p.name, _p: p,
+    brand:     p.brand === answer.brand ? "green" : "red",
+    type:      p.type === answer.type ? "green" : "red",
+    app:       p.app === answer.app ? "green" : "red",
+    substrate: p.substrate === answer.substrate ? "green" : "red",
+    width:     cmpWidth(p.width, answer.width),
+  };
+}
+
+function isWin(g) {
+  return g.brand==="green" && g.type==="green" && g.app==="green" && g.substrate==="green" && g.width==="green";
+}
+
+function renderRows() {
+  let html = "";
+  guesses.forEach(g => {
+    const p = g._p;
+    html += `<div class="guess-row">
+      <div class="cell name-cell">${esc(g.name)}</div>
+      <div class="cell ${g.brand}">${esc(p.brand)}</div>
+      <div class="cell ${g.type}">${esc(p.type)}</div>
+      <div class="cell ${g.app}">${esc(p.app)}</div>
+      <div class="cell ${g.substrate}">${esc(p.substrate)}</div>
+      <div class="cell ${g.width}">${p.width}"${g.width!=="green"?widthArrow(p.width,answer.width):""}</div>
+    </div>`;
+  });
+  for (let i = guesses.length; i < MAX; i++) {
+    html += `<div class="guess-row">
+      <div class="cell empty"></div><div class="cell empty"></div>
+      <div class="cell empty"></div><div class="cell empty"></div>
+      <div class="cell empty"></div><div class="cell empty"></div>
+    </div>`;
+  }
+  return html;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function render() {
+  const won  = guesses.length > 0 && isWin(guesses[guesses.length - 1]);
+  const lost = !won && guesses.length >= MAX;
+  const guessedNames = new Set(guesses.map(g => g.name));
+
+  let statusHtml = "";
+  if (won) {
+    statusHtml = `<div class="status-msg win">
+      Got it in ${guesses.length} ${guesses.length===1?"guess":"guesses"}!
+      Today's printer: <strong>${esc(answer.brand)} ${esc(answer.name)}</strong>.
+      <br><small style="margin-top:6px;display:block;">
+        <a href="https://vibrantprintsolutions.com" target="_blank">Browse our full catalog →</a>
+      </small>
+    </div>`;
+  } else if (lost) {
+    statusHtml = `<div class="status-msg lose">
+      Out of guesses. Today's printer was the <strong>${esc(answer.brand)} ${esc(answer.name)}</strong>.
+      <br><small style="margin-top:6px;display:block;">
+        <a href="https://vibrantprintsolutions.com" target="_blank">Learn more about this printer →</a>
+      </small>
+    </div>`;
+  }
+
+  const inputHtml = (!won && !lost) ? `
+    <div class="input-row">
+      <div class="autocomplete-wrap">
+        <input id="pInput" type="text" placeholder="Type a model name…" autocomplete="off" />
+        <div class="ac-list" id="acList" style="display:none;"></div>
+      </div>
+      <button class="guess-btn" onclick="submitGuess()">Guess</button>
+    </div>
+    <div class="error-msg" id="errMsg"></div>` : "";
+
+  document.getElementById("game-root").innerHTML = `
+    ${inputHtml}
+    <div class="col-labels">
+      <div class="col-label" style="text-align:left;">model</div>
+      <div class="col-label">brand</div>
+      <div class="col-label">technology</div>
+      <div class="col-label">application</div>
+      <div class="col-label">substrate</div>
+      <div class="col-label">width</div>
+    </div>
+    ${renderRows()}
+    ${statusHtml}`;
+
+  if (!won && !lost) bindAC(guessedNames);
+}
+
+function bindAC(guessedNames) {
+  const input  = document.getElementById("pInput");
+  const list   = document.getElementById("acList");
+  acFiltered   = [];
+  acIdx        = -1;
+  selectedPrinter = null;
+
+  input.addEventListener("input", () => {
+    const val = input.value.trim().toLowerCase();
+    selectedPrinter = null;
+    if (!val) { list.style.display="none"; return; }
+    acFiltered = PRINTERS.filter(p => !guessedNames.has(p.name) && p.name.toLowerCase().includes(val));
+    if (!acFiltered.length) { list.style.display="none"; return; }
+    acIdx = -1;
+    list.innerHTML = acFiltered.map((p,i) =>
+      `<div class="ac-item" data-i="${i}">${esc(p.name)}</div>`).join("");
+    list.style.display = "block";
+    list.querySelectorAll(".ac-item").forEach(el => {
+      el.addEventListener("mousedown", e => {
+        e.preventDefault();
+        selectedPrinter = acFiltered[+el.dataset.i];
+        input.value = selectedPrinter.name;
+        list.style.display = "none";
+      });
+    });
+  });
+
+  input.addEventListener("keydown", e => {
+    const items = list.querySelectorAll(".ac-item");
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      acIdx = Math.min(acIdx+1, items.length-1);
+      items.forEach((el,i) => el.classList.toggle("active", i===acIdx));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      acIdx = Math.max(acIdx-1, 0);
+      items.forEach((el,i) => el.classList.toggle("active", i===acIdx));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (acIdx >= 0 && acFiltered[acIdx]) {
+        selectedPrinter = acFiltered[acIdx];
+        input.value = selectedPrinter.name;
+        list.style.display = "none";
+      } else { submitGuess(); }
+    } else if (e.key === "Escape") {
+      list.style.display = "none";
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    setTimeout(() => { list.style.display="none"; }, 160);
+  });
+
+  input.focus();
+}
+
+function submitGuess() {
+  const input  = document.getElementById("pInput");
+  const errEl  = document.getElementById("errMsg");
+  const val    = input ? input.value.trim() : "";
+  const guessedNames = new Set(guesses.map(g => g.name));
+
+  let p = selectedPrinter || PRINTERS.find(x => x.name.toLowerCase() === val.toLowerCase());
+  if (!p) { if (errEl) errEl.textContent = "Select a printer from the list."; return; }
+  if (guessedNames.has(p.name)) { if (errEl) errEl.textContent = "Already guessed that one."; return; }
+
+  guesses.push(score(p));
+  render();
+}
+
+function toggleHowTo() {
+  document.getElementById("how-to-panel").classList.toggle("open");
+}
+
+render();
+</script>
+</body>
+</html>
